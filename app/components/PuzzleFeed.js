@@ -1,12 +1,14 @@
 "use client";
-import PuzzleModal from "./PuzzleModal";
 import { supabase } from "@/lib/supabase";
 
 export default function PuzzleFeed({ user, puzzles, setPuzzles, onEdit }) {
-
   async function remove(id) {
     if (!confirm("Delete this puzzle?")) return;
-    await supabase.from("puzzles").delete().eq("id", id);
+    const { error } = await supabase.from("puzzles").delete().eq("id", id);
+    if (error) {
+      alert("Error deleting puzzle: " + error.message);
+      return;
+    }
     setPuzzles(puzzles.filter(p => p.id !== id));
   }
 
