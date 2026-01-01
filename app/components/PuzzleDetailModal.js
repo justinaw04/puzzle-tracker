@@ -1,26 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../lib/supabase"; // adjust relative path
 
 export default function PuzzleDetailModal({ puzzle, user, onClose }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
 
-  // Fetch comments
   useEffect(() => {
     if (!puzzle) return;
-
     const fetchComments = async () => {
       const { data, error } = await supabase
         .from("puzzle_comments")
         .select("*")
         .eq("puzzle_id", puzzle.id)
         .order("created_at", { ascending: true });
-
       if (!error) setComments(data);
     };
-
     fetchComments();
   }, [puzzle]);
 
@@ -33,17 +29,15 @@ export default function PuzzleDetailModal({ puzzle, user, onClose }) {
         {
           puzzle_id: puzzle.id,
           user_id: user.id,
-          username: user.email, // or user.metadata.full_name if you store that
+          username: user.email,
           content: newComment,
         },
       ])
       .select()
       .single();
 
-    if (!error) {
-      setComments((prev) => [...prev, data]);
-      setNewComment("");
-    }
+    if (!error) setComments((prev) => [...prev, data]);
+    setNewComment("");
   };
 
   if (!puzzle) return null;
