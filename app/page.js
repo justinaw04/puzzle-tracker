@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AuthForm from "./components/AuthForm";
@@ -11,11 +10,10 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [puzzles, setPuzzles] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-    });
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
   }, []);
 
   useEffect(() => {
@@ -23,12 +21,12 @@ export default function Home() {
   }, [user]);
 
   async function loadPuzzles() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("puzzles")
       .select("*")
       .order("created_at", { ascending: false });
-
-    setPuzzles(data || []);
+    if (error) console.log("Supabase error:", error);
+    else setPuzzles(data || []);
   }
 
   if (!user) return <AuthForm />;
@@ -38,7 +36,7 @@ export default function Home() {
       <header className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">🧩 Puzzle Tracker</h1>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => { setEditing(null); setShowModal(true); }}
           className="bg-black text-white px-4 py-2 rounded-xl"
         >
           ➕ Add Puzzle
@@ -51,11 +49,13 @@ export default function Home() {
         user={user}
         puzzles={puzzles}
         setPuzzles={setPuzzles}
+        onEdit={p => { setEditing(p); setShowModal(true); }}
       />
 
       {showModal && (
         <PuzzleModal
           user={user}
+          puzzle={editing}
           onClose={() => setShowModal(false)}
           onSave={loadPuzzles}
         />

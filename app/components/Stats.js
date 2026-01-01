@@ -2,15 +2,9 @@
 
 export default function Stats({ puzzles }) {
   const total = puzzles.length;
-  const pieces = puzzles.reduce((s, p) => s + (p.pieces || 0), 0);
-  const avgD =
-    total === 0
-      ? 0
-      : (puzzles.reduce((s, p) => s + p.difficulty, 0) / total).toFixed(1);
-  const avgE =
-    total === 0
-      ? 0
-      : (puzzles.reduce((s, p) => s + p.enjoyment, 0) / total).toFixed(1);
+  const pieces = puzzles.reduce((sum, p) => sum + (p.pieces || 0), 0);
+  const avgD = total === 0 ? 0 : (puzzles.reduce((s, p) => s + p.difficulty, 0) / total).toFixed(1);
+  const avgE = total === 0 ? 0 : (puzzles.reduce((s, p) => s + p.enjoyment, 0) / total).toFixed(1);
 
   return (
     <div className="grid grid-cols-2 gap-4 mb-6">
