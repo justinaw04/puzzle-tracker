@@ -1,30 +1,34 @@
 export default function PuzzleStats({ puzzles }) {
-  if (!puzzles.length) return <p className="p-4">No puzzles match the filter.</p>;
+  if (!puzzles.length) return null;
 
-  const totalPieces = puzzles.reduce((sum, p) => sum + p.pieces, 0);
+  // Convert HH:MM to minutes for averaging
+  const timesInMinutes = puzzles
+    .map(p => {
+      if (!p.time) return 0;
+      const [hours, minutes] = p.time.split(":").map(Number);
+      return hours * 60 + minutes;
+    });
+
+  const totalTime = timesInMinutes.reduce((a, b) => a + b, 0);
+  const avgTimeMinutes = Math.round(totalTime / puzzles.length);
+  const avgHours = Math.floor(avgTimeMinutes / 60);
+  const avgMinutes = avgTimeMinutes % 60;
+
   const avgDifficulty =
-    puzzles.reduce((sum, p) => sum + p.difficulty, 0) / puzzles.length;
+    Math.round(puzzles.reduce((a, b) => a + b.difficulty, 0) / puzzles.length);
   const avgEnjoyment =
-    puzzles.reduce((sum, p) => sum + p.enjoyment, 0) / puzzles.length;
+    Math.round(puzzles.reduce((a, b) => a + b.enjoyment, 0) / puzzles.length);
 
   return (
-    <div className="p-4 bg-white rounded-2xl shadow mb-4 flex flex-wrap gap-6 justify-around">
-      <div className="text-center">
-        <p className="text-xl font-bold">{puzzles.length}</p>
-        <p className="text-gray-500">Puzzles</p>
-      </div>
-      <div className="text-center">
-        <p className="text-xl font-bold">{totalPieces}</p>
-        <p className="text-gray-500">Total Pieces</p>
-      </div>
-      <div className="text-center">
-        <p className="text-xl font-bold">{avgDifficulty.toFixed(1)}</p>
-        <p className="text-gray-500">Avg Difficulty</p>
-      </div>
-      <div className="text-center">
-        <p className="text-xl font-bold">{avgEnjoyment.toFixed(1)}</p>
-        <p className="text-gray-500">Avg Enjoyment</p>
-      </div>
+    <div className="bg-white rounded-xl shadow p-4 mb-4 flex flex-col gap-2">
+      <p>Total Puzzles: {puzzles.length}</p>
+      <p>
+        Average Difficulty: {avgDifficulty} | Average Enjoyment: {avgEnjoyment}
+      </p>
+      <p>
+        Average Time: {avgHours.toString().padStart(2, "0")}:
+        {avgMinutes.toString().padStart(2, "0")}
+      </p>
     </div>
   );
 }

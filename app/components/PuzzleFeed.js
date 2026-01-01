@@ -25,6 +25,7 @@ export default function PuzzleFeed({ puzzles, user, onCardClick, onEdit, onDelet
           <div className="p-3">
             <h3 className="font-bold text-lg truncate">{puzzle.title}</h3>
             <p className="text-sm">Pieces: {puzzle.pieces}</p>
+            <p className="text-sm">Time: {puzzle.time || "N/A"}</p>
             <p className="text-sm">Difficulty: {puzzle.difficulty}</p>
             <p className="text-sm">Enjoyment: {puzzle.enjoyment}</p>
             <p className="text-sm text-gray-500 truncate">By: {puzzle.username}</p>
