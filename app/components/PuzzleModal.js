@@ -14,10 +14,8 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ Log user info to ensure RLS passes
-    console.log("Submitting puzzle as:", user?.id, user?.email);
     if (!user?.id) {
-      alert("User not logged in!");
+      alert("You must be logged in to submit a puzzle!");
       return;
     }
 
@@ -29,13 +27,17 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
       // 1️⃣ Upload image if selected
       if (image) {
         const fileExt = image.name.split(".").pop();
-        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const safeUserId = user.id.replace(/[^a-zA-Z0-9-]/g, "");
+        const fileName = `${safeUserId}-${Date.now()}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from("puzzle-images")
           .upload(fileName, image, { upsert: true });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error("Storage upload error:", uploadError);
+          throw new Error("Failed to upload image: " + uploadError.message);
+        }
 
         const { data: urlData } = supabase.storage
           .from("puzzle-images")
@@ -64,7 +66,7 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
         const { error: insertError } = await supabase
           .from("puzzles")
           .insert({
-            user_id: user.id,         // ✅ MUST MATCH auth.uid()
+            user_id: user.id,          // ✅ MUST MATCH auth.uid()
             username: user.email,
             title,
             pieces: Number(pieces),
@@ -78,7 +80,7 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
 
       // 3️⃣ Close modal and refresh feed
       onClose();
-      onSave(); // should refetch puzzles & update stats
+      onSave(); // refetch puzzles & update stats
 
     } catch (err) {
       console.error("Error saving puzzle:", err.message);
