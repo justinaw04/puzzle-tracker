@@ -11,9 +11,16 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ Log user info to ensure RLS passes
+    console.log("Submitting puzzle as:", user?.id, user?.email);
+    if (!user?.id) {
+      alert("User not logged in!");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -23,26 +30,23 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
       if (image) {
         const fileExt = image.name.split(".").pop();
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-        const filePath = fileName; // store in root of bucket
 
-        // Upload the file
         const { error: uploadError } = await supabase.storage
           .from("puzzle-images")
-          .upload(filePath, image, { upsert: true });
+          .upload(fileName, image, { upsert: true });
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
         const { data: urlData } = supabase.storage
           .from("puzzle-images")
-          .getPublicUrl(filePath);
+          .getPublicUrl(fileName);
 
         imageUrl = urlData.publicUrl;
       }
 
       // 2️⃣ Insert or update puzzle
       if (puzzle) {
-        // Editing existing puzzle
+        // Edit existing puzzle
         const { error: updateError } = await supabase
           .from("puzzles")
           .update({
@@ -56,11 +60,11 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
 
         if (updateError) throw updateError;
       } else {
-        // Adding new puzzle
+        // Add new puzzle
         const { error: insertError } = await supabase
           .from("puzzles")
           .insert({
-            user_id: user.id,
+            user_id: user.id,         // ✅ MUST MATCH auth.uid()
             username: user.email,
             title,
             pieces: Number(pieces),
@@ -74,7 +78,7 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
 
       // 3️⃣ Close modal and refresh feed
       onClose();
-      onSave(); // this should refetch puzzles and update stats
+      onSave(); // should refetch puzzles & update stats
 
     } catch (err) {
       console.error("Error saving puzzle:", err.message);
