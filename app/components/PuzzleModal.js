@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 
 export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
   const [title, setTitle] = useState(puzzle?.title || "");
-  const [pieces, setPieces] = useState(puzzle?.pieces || "");
+  const [pieces, setPieces] = useState(puzzle?.pieces || 0);
   const [difficulty, setDifficulty] = useState(puzzle?.difficulty || 3);
   const [enjoyment, setEnjoyment] = useState(puzzle?.enjoyment || 3);
   const [image, setImage] = useState(null);
@@ -24,7 +24,7 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
     try {
       let imageUrl = puzzle?.image_url || null;
 
-      // 1️⃣ Upload image if selected
+      // Upload image if selected
       if (image) {
         const fileExt = image.name.split(".").pop();
         const safeUserId = user.id.replace(/[^a-zA-Z0-9-]/g, "");
@@ -34,10 +34,7 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
           .from("puzzle-images")
           .upload(fileName, image, { upsert: true });
 
-        if (uploadError) {
-          console.error("Storage upload error:", uploadError);
-          throw new Error("Failed to upload image: " + uploadError.message);
-        }
+        if (uploadError) throw new Error(uploadError.message);
 
         const { data: urlData } = supabase.storage
           .from("puzzle-images")
@@ -46,9 +43,8 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
         imageUrl = urlData.publicUrl;
       }
 
-      // 2️⃣ Insert or update puzzle
+      // Insert or update puzzle
       if (puzzle) {
-        // Edit existing puzzle
         const { error: updateError } = await supabase
           .from("puzzles")
           .update({
@@ -62,11 +58,10 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
 
         if (updateError) throw updateError;
       } else {
-        // Add new puzzle
         const { error: insertError } = await supabase
           .from("puzzles")
           .insert({
-            user_id: user.id,          // ✅ MUST MATCH auth.uid()
+            user_id: user.id,
             username: user.email,
             title,
             pieces: Number(pieces),
@@ -78,9 +73,8 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
         if (insertError) throw insertError;
       }
 
-      // 3️⃣ Close modal and refresh feed
       onClose();
-      onSave(); // refetch puzzles & update stats
+      onSave(); // refresh feed/stats
 
     } catch (err) {
       console.error("Error saving puzzle:", err.message);
@@ -117,20 +111,22 @@ export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
           required
         />
 
-        <label>Difficulty {"⭐".repeat(difficulty)}</label>
+        <label>Difficulty (0-5)</label>
         <input
           type="range"
-          min="1"
+          min="0"
           max="5"
+          step="1"
           value={difficulty}
           onChange={(e) => setDifficulty(+e.target.value)}
         />
 
-        <label>Enjoyment {"❤️".repeat(enjoyment)}</label>
+        <label>Enjoyment (0-5)</label>
         <input
           type="range"
-          min="1"
+          min="0"
           max="5"
+          step="1"
           value={enjoyment}
           onChange={(e) => setEnjoyment(+e.target.value)}
         />

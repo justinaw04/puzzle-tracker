@@ -1,34 +1,40 @@
 "use client";
-import { supabase } from "@/lib/supabase";
 
-export default function PuzzleFeed({ user, puzzles, setPuzzles, onEdit }) {
-  async function remove(id) {
-    if (!confirm("Delete this puzzle?")) return;
-    const { error } = await supabase.from("puzzles").delete().eq("id", id);
-    if (error) {
-      alert("Error deleting puzzle: " + error.message);
-      return;
-    }
-    setPuzzles(puzzles.filter(p => p.id !== id));
-  }
-
+export default function PuzzleFeed({ puzzles, onEdit, onDelete }) {
   return (
-    <div className="space-y-4">
-      {puzzles.map(p => (
-        <div key={p.id} className="bg-white rounded-2xl shadow p-4">
-          <div className="flex justify-between">
-            <strong>{p.title}</strong>
-            <span className="text-xs text-gray-400">{new Date(p.created_at).toLocaleDateString()}</span>
-          </div>
-          <div className="text-sm text-gray-500 mb-1">{p.pieces} pieces • by {p.username}</div>
-          <div>{"⭐".repeat(p.difficulty || 0)} {"❤️".repeat(p.enjoyment || 0)}</div>
-          {p.image_url && <img src={p.image_url} className="rounded-xl mt-2 max-h-64" />}
-          {p.user_id === user.id && (
-            <div className="flex gap-2 mt-3">
-              <button onClick={() => onEdit(p)} className="border px-3 py-1 rounded-lg">Edit</button>
-              <button onClick={() => remove(p.id)} className="border px-3 py-1 rounded-lg text-red-600">Delete</button>
-            </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+      {puzzles.map((puzzle) => (
+        <div
+          key={puzzle.id}
+          className="border rounded-2xl overflow-hidden shadow hover:shadow-lg transition"
+        >
+          {puzzle.image_url && (
+            <img
+              src={puzzle.image_url}
+              alt={puzzle.title}
+              className="w-full h-40 object-cover"
+            />
           )}
+          <div className="p-3">
+            <h3 className="font-bold text-lg">{puzzle.title}</h3>
+            <p>Pieces: {puzzle.pieces}</p>
+            <p>Difficulty: {puzzle.difficulty}/5</p>
+            <p>Enjoyment: {puzzle.enjoyment}/5</p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => onEdit(puzzle)}
+                className="border px-3 py-1 rounded-lg"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => onDelete(puzzle.id)}
+                className="border px-3 py-1 rounded-lg text-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       ))}
     </div>
