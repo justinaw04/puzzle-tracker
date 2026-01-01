@@ -8,13 +8,23 @@ export default function PuzzleModal({ user, puzzle = null, onClose, onSave }) {
   const [pieces, setPieces] = useState(puzzle?.pieces || 0);
   const [difficulty, setDifficulty] = useState(puzzle?.difficulty || 0);
   const [enjoyment, setEnjoyment] = useState(puzzle?.enjoyment || 0);
+  const [time, setTime] = useState(puzzle?.time || ""); // HH:MM format
   const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async () => {
     if (!user) return setError("Must be logged in");
-    if (!title || !pieces || !difficulty || !enjoyment) return setError("All fields required");
+
+    // Basic required field validation
+    if (!title || !pieces || !difficulty || !enjoyment || !time) {
+      return setError("All fields are required.");
+    }
+
+    // Validate time format HH:MM
+    if (!/^\d{2}:\d{2}$/.test(time)) {
+      return setError("Time must be in HH:MM format");
+    }
 
     setLoading(true);
     setError("");
@@ -22,6 +32,7 @@ export default function PuzzleModal({ user, puzzle = null, onClose, onSave }) {
     try {
       let imageUrl = puzzle?.image_url || "";
 
+      // Upload new image if provided
       if (imageFile) {
         const fileExt = imageFile.name.split(".").pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -34,23 +45,41 @@ export default function PuzzleModal({ user, puzzle = null, onClose, onSave }) {
         imageUrl = data.publicUrl;
       }
 
+      // Insert or update puzzle in Supabase
       if (puzzle) {
         const { error: updateError } = await supabase
           .from("puzzles")
-          .update({ title, pieces, difficulty, enjoyment, image_url: imageUrl })
+          .update({
+            title,
+            pieces,
+            difficulty,
+            enjoyment,
+            time,
+            image_url: imageUrl,
+          })
           .eq("id", puzzle.id);
         if (updateError) throw updateError;
       } else {
         const { error: insertError } = await supabase
           .from("puzzles")
-          .insert({ title, pieces, difficulty, enjoyment, image_url: imageUrl, user_id: user.id, username: user.email });
+          .insert({
+            title,
+            pieces,
+            difficulty,
+            enjoyment,
+            time,
+            image_url: imageUrl,
+            user_id: user.id,
+            username: user.email,
+          });
         if (insertError) throw insertError;
       }
 
-      onSave();
+      onSave?.();
       onClose();
     } catch (err) {
-      setError(err.message || "Error saving puzzle");
+      console.error(err);
+      setError(err.message || "Error saving puzzle.");
     } finally {
       setLoading(false);
     }
@@ -66,25 +95,75 @@ export default function PuzzleModal({ user, puzzle = null, onClose, onSave }) {
           ✕
         </button>
 
-        <h2 className="text-xl font-bold mb-4">{puzzle ? "Edit Puzzle" : "Add Puzzle"}</h2>
+        <h2 className="text-xl font-bold mb-4">
+          {puzzle ? "Edit Puzzle" : "Add Puzzle"}
+        </h2>
+
         {error && <p className="text-red-600 mb-2">{error}</p>}
 
+        {/* Title */}
         <label className="block mb-1">Title</label>
-        <input className="border p-2 rounded w-full mb-2" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input
+          className="border p-2 rounded w-full mb-2"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
 
+        {/* Pieces */}
         <label className="block mb-1">Pieces</label>
-        <input type="number" className="border p-2 rounded w-full mb-2" value={pieces} onChange={(e) => setPieces(Number(e.target.value))} />
+        <input
+          type="number"
+          className="border p-2 rounded w-full mb-2"
+          value={pieces}
+          onChange={(e) => setPieces(Number(e.target.value))}
+        />
 
+        {/* Difficulty */}
         <label className="block mb-1">Difficulty (0-5)</label>
-        <input type="number" min={0} max={5} className="border p-2 rounded w-full mb-2" value={difficulty} onChange={(e) => setDifficulty(Number(e.target.value))} />
+        <input
+          type="number"
+          min={0}
+          max={5}
+          className="border p-2 rounded w-full mb-2"
+          value={difficulty}
+          onChange={(e) => setDifficulty(Number(e.target.value))}
+        />
 
+        {/* Enjoyment */}
         <label className="block mb-1">Enjoyment (0-5)</label>
-        <input type="number" min={0} max={5} className="border p-2 rounded w-full mb-2" value={enjoyment} onChange={(e) => setEnjoyment(Number(e.target.value))} />
+        <input
+          type="number"
+          min={0}
+          max={5}
+          className="border p-2 rounded w-full mb-2"
+          value={enjoyment}
+          onChange={(e) => setEnjoyment(Number(e.target.value))}
+        />
 
+        {/* Time to Complete */}
+        <label className="block mb-1">Time to Complete (HH:MM)</label>
+        <input
+          type="text"
+          className="border p-2 rounded w-full mb-2"
+          placeholder="01:11"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+        />
+
+        {/* Image */}
         <label className="block mb-1">Image</label>
-        <input type="file" accept="image/*" className="border p-2 rounded w-full mb-4" onChange={(e) => setImageFile(e.target.files[0])} />
+        <input
+          type="file"
+          accept="image/*"
+          className="border p-2 rounded w-full mb-4"
+          onChange={(e) => setImageFile(e.target.files[0])}
+        />
 
-        <button className="bg-black text-white px-4 py-2 rounded w-full" onClick={handleSubmit} disabled={loading}>
+        <button
+          className="bg-black text-white px-4 py-2 rounded w-full"
+          onClick={handleSubmit}
+          disabled={loading}
+        >
           {loading ? "Saving..." : puzzle ? "Update Puzzle" : "Add Puzzle"}
         </button>
       </div>
