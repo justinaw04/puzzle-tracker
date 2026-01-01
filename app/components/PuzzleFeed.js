@@ -1,6 +1,14 @@
 "use client";
 
-export default function PuzzleFeed({ puzzles, user, onCardClick }) {
+import { supabase } from "../../lib/supabase";
+
+export default function PuzzleFeed({ puzzles, user, onCardClick, onEdit, onDelete }) {
+  const handleDelete = async (puzzle) => {
+    if (!confirm("Delete this puzzle?")) return;
+    await supabase.from("puzzles").delete().eq("id", puzzle.id);
+    onDelete(); // refresh puzzles
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
       {puzzles.map((puzzle) => (
@@ -27,7 +35,7 @@ export default function PuzzleFeed({ puzzles, user, onCardClick }) {
                   className="text-blue-600 hover:underline text-sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    console.log("Edit", puzzle.id);
+                    onEdit(puzzle);
                   }}
                 >
                   Edit
@@ -36,7 +44,7 @@ export default function PuzzleFeed({ puzzles, user, onCardClick }) {
                   className="text-red-600 hover:underline text-sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    console.log("Delete", puzzle.id);
+                    handleDelete(puzzle);
                   }}
                 >
                   Delete
