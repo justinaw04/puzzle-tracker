@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import PuzzleFeed from "./PuzzleFeed";
-import PuzzleStats from "./PuzzleStats";
-import PuzzleModal from "./PuzzleModal";
+import PuzzleFeed from "./PuzzleFeed";       // relative import
+import PuzzleStats from "./Stats";     // relative import
+import PuzzleModal from "./PuzzleModal";     // relative import
+
 
 export default function Gallery({ puzzles, user }) {
   const [userFilter, setUserFilter] = useState("");
