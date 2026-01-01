@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import PuzzleFeed from "./PuzzleFeed";
-import PuzzleStats from "./PuzzleStats";
+import PuzzleStats from "./Stats";
 import PuzzleDetailModal from "./PuzzleDetailModal";
 
 export default function Gallery({ puzzles, user }) {
