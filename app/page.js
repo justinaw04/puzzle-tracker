@@ -1,9 +1,8 @@
 "use client";
 
-import Gallery from "./components/Gallery"; // <-- use ./ instead of ../
-import { supabase } from "../lib/supabase"; // lib is still at project root
 import { useState, useEffect } from "react";
-
+import Gallery from "./components/Gallery"; // components inside app/
+import { supabase } from "../lib/supabase";
 
 export default function HomePage() {
   const [puzzles, setPuzzles] = useState([]);
@@ -12,27 +11,22 @@ export default function HomePage() {
   // --- Get current logged-in user
   useEffect(() => {
     const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) setUser(session.user);
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.user) setUser(data.session.user);
     };
     getSession();
 
-    // Listen for auth changes (login/logout)
-    const { data: authListener } = supabase.auth.onAuthStateChange(
+    const { subscription } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (session?.user) setUser(session.user);
         else setUser(null);
       }
     );
 
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
-  // --- Fetch all puzzles
+  // --- Fetch puzzles
   useEffect(() => {
     const fetchPuzzles = async () => {
       const { data, error } = await supabase
@@ -43,30 +37,34 @@ export default function HomePage() {
     };
     fetchPuzzles();
 
-    // --- Real-time updates
-    const subscription = supabase
-      .from("puzzles")
-      .on("*", (payload) => {
-        // payload.eventType can be INSERT, UPDATE, DELETE
-        setPuzzles((prev) => {
-          switch (payload.eventType) {
-            case "INSERT":
-              return [payload.new, ...prev];
-            case "UPDATE":
-              return prev.map((p) =>
-                p.id === payload.new.id ? payload.new : p
-              );
-            case "DELETE":
-              return prev.filter((p) => p.id !== payload.old.id);
-            default:
-              return prev;
-          }
-        });
-      })
+    // --- Real-time subscription using v2 API
+    const puzzleChannel = supabase
+      .channel("public:puzzles")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "puzzles" },
+        (payload) => {
+          setPuzzles((prev) => {
+            switch (payload.eventType) {
+              case "INSERT":
+                return [payload.new, ...prev];
+              case "UPDATE":
+                return prev.map((p) =>
+                  p.id === payload.new.id ? payload.new : p
+                );
+              case "DELETE":
+                return prev.filter((p) => p.id !== payload.old.id);
+              default:
+                return prev;
+            }
+          });
+        }
+      )
       .subscribe();
 
+    // Cleanup subscription on unmount
     return () => {
-      supabase.removeSubscription(subscription);
+      supabase.removeChannel(puzzleChannel);
     };
   }, []);
 
