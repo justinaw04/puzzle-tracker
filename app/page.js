@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Gallery from "@/components/Gallery";
+import Gallery from "../components/Gallery";
 import { supabase } from "@/lib/supabase";
 
 export default function HomePage() {
