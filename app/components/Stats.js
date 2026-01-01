@@ -10,12 +10,26 @@ export default function Stats() {
   }, []);
 
   async function load() {
-    const { data } = await supabase.from("puzzles").select("*");
+    const { data, error } = await supabase.from("puzzles").select("*");
+
+    if (error || !data || data.length === 0) {
+      setStats({
+        total: 0,
+        pieces: 0,
+        avgD: 0,
+        avgE: 0,
+      });
+      return;
+    }
 
     const total = data.length;
-    const pieces = data.reduce((s, p) => s + p.pieces, 0);
-    const avgD = (data.reduce((s, p) => s + p.difficulty, 0) / total || 0).toFixed(1);
-    const avgE = (data.reduce((s, p) => s + p.enjoyment, 0) / total || 0).toFixed(1);
+    const pieces = data.reduce((s, p) => s + (p.pieces || 0), 0);
+    const avgD = (
+      data.reduce((s, p) => s + (p.difficulty || 0), 0) / total
+    ).toFixed(1);
+    const avgE = (
+      data.reduce((s, p) => s + (p.enjoyment || 0), 0) / total
+    ).toFixed(1);
 
     setStats({ total, pieces, avgD, avgE });
   }
