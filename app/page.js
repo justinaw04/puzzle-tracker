@@ -1,67 +1,77 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import Gallery from "@/components/Gallery";
 import { supabase } from "@/lib/supabase";
-import AuthForm from "./components/AuthForm";
-import PuzzleFeed from "./components/PuzzleFeed";
-import PuzzleModal from "./components/PuzzleModal";
-import Stats from "./components/Stats";
-import Gallery from "./components/Gallery";
 
-export default function Home() {
-  const [user, setUser] = useState(null);
+export default function HomePage() {
   const [puzzles, setPuzzles] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [user, setUser] = useState(null);
 
+  // --- Get current logged-in user
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const getSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) setUser(session.user);
+    };
+    getSession();
+
+    // Listen for auth changes (login/logout)
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user) setUser(session.user);
+        else setUser(null);
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
+  // --- Fetch all puzzles
   useEffect(() => {
-    if (user) loadPuzzles();
-  }, [user]);
+    const fetchPuzzles = async () => {
+      const { data, error } = await supabase
+        .from("puzzles")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!error) setPuzzles(data);
+    };
+    fetchPuzzles();
 
-  async function loadPuzzles() {
-    const { data, error } = await supabase
+    // --- Real-time updates
+    const subscription = supabase
       .from("puzzles")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) console.log("Supabase error:", error);
-    else setPuzzles(data || []);
-  }
+      .on("*", (payload) => {
+        // payload.eventType can be INSERT, UPDATE, DELETE
+        setPuzzles((prev) => {
+          switch (payload.eventType) {
+            case "INSERT":
+              return [payload.new, ...prev];
+            case "UPDATE":
+              return prev.map((p) =>
+                p.id === payload.new.id ? payload.new : p
+              );
+            case "DELETE":
+              return prev.filter((p) => p.id !== payload.old.id);
+            default:
+              return prev;
+          }
+        });
+      })
+      .subscribe();
 
-  if (!user) return <AuthForm />;
+    return () => {
+      supabase.removeSubscription(subscription);
+    };
+  }, []);
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <header className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">🧩 Puzzle Tracker</h1>
-        <button
-          onClick={() => { setEditing(null); setShowModal(true); }}
-          className="bg-black text-white px-4 py-2 rounded-xl"
-        >
-          ➕ Add Puzzle
-        </button>
-      </header>
-
-      <Stats puzzles={puzzles} />
-
-      <PuzzleFeed
-        user={user}
-        puzzles={puzzles}
-        setPuzzles={setPuzzles}
-        onEdit={p => { setEditing(p); setShowModal(true); }}
-      />
-
-      {showModal && (
-        <PuzzleModal
-          user={user}
-          puzzle={editing}
-          onClose={() => setShowModal(false)}
-          onSave={loadPuzzles}
-        />
-      )}
-    </div>
+    <main className="min-h-screen bg-gray-100">
+      <Gallery puzzles={puzzles} user={user} />
+    </main>
   );
 }
