@@ -6,6 +6,7 @@ import AuthForm from "./components/AuthForm";
 import PuzzleFeed from "./components/PuzzleFeed";
 import PuzzleModal from "./components/PuzzleModal";
 import Stats from "./components/Stats";
+import Gallery from "./components/Gallery";
 
 export default function Home() {
   const [user, setUser] = useState(null);

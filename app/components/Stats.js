@@ -1,26 +1,30 @@
-"use client";
+export default function PuzzleStats({ puzzles }) {
+  if (!puzzles.length) return <p className="p-4">No puzzles match the filter.</p>;
 
-export default function Stats({ puzzles }) {
-  const total = puzzles.length;
-  const pieces = puzzles.reduce((sum, p) => sum + (p.pieces || 0), 0);
-  const avgD = total === 0 ? 0 : (puzzles.reduce((s, p) => s + p.difficulty, 0) / total).toFixed(1);
-  const avgE = total === 0 ? 0 : (puzzles.reduce((s, p) => s + p.enjoyment, 0) / total).toFixed(1);
+  const totalPieces = puzzles.reduce((sum, p) => sum + p.pieces, 0);
+  const avgDifficulty =
+    puzzles.reduce((sum, p) => sum + p.difficulty, 0) / puzzles.length;
+  const avgEnjoyment =
+    puzzles.reduce((sum, p) => sum + p.enjoyment, 0) / puzzles.length;
 
   return (
-    <div className="grid grid-cols-2 gap-4 mb-6">
-      <Card label="Puzzles" value={total} />
-      <Card label="Pieces" value={pieces} />
-      <Card label="Avg Difficulty" value={avgD} />
-      <Card label="Avg Enjoyment" value={avgE} />
-    </div>
-  );
-}
-
-function Card({ label, value }) {
-  return (
-    <div className="bg-white rounded-2xl shadow p-4 text-center">
-      <div className="text-2xl font-bold">{value}</div>
-      <div className="text-sm text-gray-500">{label}</div>
+    <div className="p-4 bg-white rounded-2xl shadow mb-4 flex flex-wrap gap-6 justify-around">
+      <div className="text-center">
+        <p className="text-xl font-bold">{puzzles.length}</p>
+        <p className="text-gray-500">Puzzles</p>
+      </div>
+      <div className="text-center">
+        <p className="text-xl font-bold">{totalPieces}</p>
+        <p className="text-gray-500">Total Pieces</p>
+      </div>
+      <div className="text-center">
+        <p className="text-xl font-bold">{avgDifficulty.toFixed(1)}</p>
+        <p className="text-gray-500">Avg Difficulty</p>
+      </div>
+      <div className="text-center">
+        <p className="text-xl font-bold">{avgEnjoyment.toFixed(1)}</p>
+        <p className="text-gray-500">Avg Enjoyment</p>
+      </div>
     </div>
   );
 }
