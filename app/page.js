@@ -1,8 +1,9 @@
 "use client";
 
+import Gallery from "./components/Gallery"; // <-- use ./ instead of ../
+import { supabase } from "../lib/supabase"; // lib is still at project root
 import { useState, useEffect } from "react";
-import Gallery from "../components/Gallery";
-import { supabase } from "@/lib/supabase";
+
 
 export default function HomePage() {
   const [puzzles, setPuzzles] = useState([]);
