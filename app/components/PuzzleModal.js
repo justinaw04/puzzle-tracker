@@ -118,26 +118,32 @@ export default function PuzzleModal({ user, puzzle = null, onClose, onSave }) {
           onChange={(e) => setPieces(Number(e.target.value))}
         />
 
-        {/* Difficulty */}
-        <label className="block mb-1">Difficulty (0-5)</label>
+        {/* Difficulty Slider */}
+        <label className="block mb-1">
+        Difficulty: {difficulty}
+        </label>
         <input
-          type="number"
-          min={0}
-          max={5}
-          className="border p-2 rounded w-full mb-2"
-          value={difficulty}
-          onChange={(e) => setDifficulty(Number(e.target.value))}
+        type="range"
+        min={0}
+        max={5}
+        step={1}
+        value={difficulty}
+        onChange={(e) => setDifficulty(Number(e.target.value))}
+        className="w-full mb-2"
         />
 
-        {/* Enjoyment */}
-        <label className="block mb-1">Enjoyment (0-5)</label>
+        {/* Enjoyment Slider */}
+        <label className="block mb-1">
+        Enjoyment: {enjoyment}
+        </label>
         <input
-          type="number"
-          min={0}
-          max={5}
-          className="border p-2 rounded w-full mb-2"
-          value={enjoyment}
-          onChange={(e) => setEnjoyment(Number(e.target.value))}
+        type="range"
+        min={0}
+        max={5}
+        step={1}
+        value={enjoyment}
+        onChange={(e) => setEnjoyment(Number(e.target.value))}
+        className="w-full mb-2"
         />
 
         {/* Time to Complete */}
