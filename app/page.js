@@ -9,6 +9,7 @@ import Stats from "./components/Stats";
 
 export default function Home() {
   const [user, setUser] = useState(null);
+  const [puzzles, setPuzzles] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -16,6 +17,19 @@ export default function Home() {
       setUser(data.user);
     });
   }, []);
+
+  useEffect(() => {
+    if (user) loadPuzzles();
+  }, [user]);
+
+  async function loadPuzzles() {
+    const { data } = await supabase
+      .from("puzzles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    setPuzzles(data || []);
+  }
 
   if (!user) return <AuthForm />;
 
@@ -31,14 +45,19 @@ export default function Home() {
         </button>
       </header>
 
-      <Stats />
+      <Stats puzzles={puzzles} />
 
-      <PuzzleFeed user={user} />
+      <PuzzleFeed
+        user={user}
+        puzzles={puzzles}
+        setPuzzles={setPuzzles}
+      />
 
       {showModal && (
         <PuzzleModal
           user={user}
           onClose={() => setShowModal(false)}
+          onSave={loadPuzzles}
         />
       )}
     </div>

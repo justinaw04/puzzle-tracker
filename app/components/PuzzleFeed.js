@@ -1,29 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import PuzzleModal from "./PuzzleModal";
+import { useState } from "react";
 
-export default function PuzzleFeed({ user }) {
-  const [puzzles, setPuzzles] = useState([]);
+export default function PuzzleFeed({ user, puzzles, setPuzzles }) {
   const [editing, setEditing] = useState(null);
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function load() {
-    const { data } = await supabase
-      .from("puzzles")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    setPuzzles(data || []);
-  }
 
   async function remove(id) {
     if (!confirm("Delete this puzzle?")) return;
     await supabase.from("puzzles").delete().eq("id", id);
-    load();
+    setPuzzles(puzzles.filter(p => p.id !== id));
   }
 
   return (
@@ -37,7 +23,7 @@ export default function PuzzleFeed({ user }) {
             </span>
           </div>
 
-          <div className="text-sm text-gray-500 mb-1">
+          <div className="text-sm text-gray-500">
             {p.pieces} pieces • by {p.username}
           </div>
 
@@ -49,16 +35,10 @@ export default function PuzzleFeed({ user }) {
 
           {p.user_id === user.id && (
             <div className="flex gap-2 mt-3">
-              <button
-                onClick={() => setEditing(p)}
-                className="border px-3 py-1 rounded-lg"
-              >
+              <button onClick={() => setEditing(p)} className="border px-3 py-1 rounded-lg">
                 Edit
               </button>
-              <button
-                onClick={() => remove(p.id)}
-                className="border px-3 py-1 rounded-lg text-red-600"
-              >
+              <button onClick={() => remove(p.id)} className="border px-3 py-1 rounded-lg text-red-600">
                 Delete
               </button>
             </div>
@@ -70,10 +50,8 @@ export default function PuzzleFeed({ user }) {
         <PuzzleModal
           user={user}
           puzzle={editing}
-          onClose={() => {
-            setEditing(null);
-            load();
-          }}
+          onClose={() => setEditing(null)}
+          onSave={() => setEditing(null)}
         />
       )}
     </div>

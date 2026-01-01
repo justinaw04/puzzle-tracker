@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-export default function PuzzleModal({ user, onClose, puzzle }) {
+export default function PuzzleModal({ user, puzzle, onClose, onSave }) {
   const [title, setTitle] = useState(puzzle?.title || "");
   const [pieces, setPieces] = useState(puzzle?.pieces || "");
   const [difficulty, setDifficulty] = useState(puzzle?.difficulty || 3);
@@ -18,10 +18,7 @@ export default function PuzzleModal({ user, onClose, puzzle }) {
 
     if (image) {
       const fileName = `${user.id}-${Date.now()}`;
-      await supabase.storage
-        .from("puzzle-images")
-        .upload(fileName, image);
-
+      await supabase.storage.from("puzzle-images").upload(fileName, image);
       imageUrl = supabase.storage
         .from("puzzle-images")
         .getPublicUrl(fileName).data.publicUrl;
@@ -30,7 +27,13 @@ export default function PuzzleModal({ user, onClose, puzzle }) {
     if (puzzle) {
       await supabase
         .from("puzzles")
-        .update({ title, pieces, difficulty, enjoyment, image_url: imageUrl })
+        .update({
+          title,
+          pieces: Number(pieces),
+          difficulty,
+          enjoyment,
+          image_url: imageUrl,
+        })
         .eq("id", puzzle.id);
     } else {
       await supabase.from("puzzles").insert({
@@ -46,7 +49,7 @@ export default function PuzzleModal({ user, onClose, puzzle }) {
 
     setLoading(false);
     onClose();
-    location.reload(); // simple + reliable
+    onSave(); // 🔑 refresh shared state
   }
 
   return (
@@ -85,7 +88,7 @@ export default function PuzzleModal({ user, onClose, puzzle }) {
         <input type="file" accept="image/*" onChange={e => setImage(e.target.files[0])} />
 
         <div className="flex justify-end gap-2 pt-2">
-          <button type="button" onClick={onClose} className="px-4 py-2 border rounded-xl">
+          <button type="button" onClick={onClose} className="border px-4 py-2 rounded-xl">
             Cancel
           </button>
           <button disabled={loading} className="bg-black text-white px-4 py-2 rounded-xl">

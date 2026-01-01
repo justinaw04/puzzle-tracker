@@ -1,47 +1,23 @@
 "use client";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 
-export default function Stats() {
-  const [stats, setStats] = useState(null);
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function load() {
-    const { data, error } = await supabase.from("puzzles").select("*");
-
-    if (error || !data || data.length === 0) {
-      setStats({
-        total: 0,
-        pieces: 0,
-        avgD: 0,
-        avgE: 0,
-      });
-      return;
-    }
-
-    const total = data.length;
-    const pieces = data.reduce((s, p) => s + (p.pieces || 0), 0);
-    const avgD = (
-      data.reduce((s, p) => s + (p.difficulty || 0), 0) / total
-    ).toFixed(1);
-    const avgE = (
-      data.reduce((s, p) => s + (p.enjoyment || 0), 0) / total
-    ).toFixed(1);
-
-    setStats({ total, pieces, avgD, avgE });
-  }
-
-  if (!stats) return null;
+export default function Stats({ puzzles }) {
+  const total = puzzles.length;
+  const pieces = puzzles.reduce((s, p) => s + (p.pieces || 0), 0);
+  const avgD =
+    total === 0
+      ? 0
+      : (puzzles.reduce((s, p) => s + p.difficulty, 0) / total).toFixed(1);
+  const avgE =
+    total === 0
+      ? 0
+      : (puzzles.reduce((s, p) => s + p.enjoyment, 0) / total).toFixed(1);
 
   return (
     <div className="grid grid-cols-2 gap-4 mb-6">
-      <Card label="Puzzles" value={stats.total} />
-      <Card label="Pieces" value={stats.pieces} />
-      <Card label="Avg Difficulty" value={stats.avgD} />
-      <Card label="Avg Enjoyment" value={stats.avgE} />
+      <Card label="Puzzles" value={total} />
+      <Card label="Pieces" value={pieces} />
+      <Card label="Avg Difficulty" value={avgD} />
+      <Card label="Avg Enjoyment" value={avgE} />
     </div>
   );
 }
